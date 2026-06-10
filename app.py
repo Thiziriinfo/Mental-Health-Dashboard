@@ -59,6 +59,7 @@ with st.sidebar:
         "💶 Impact Économique",
         "👥 Profil Démographique",
         "🔍 Explorateur SQL",
+        "💡 ROI & Recommandations",
     ])
     st.markdown("---")
     st.markdown("**Filtres**")
@@ -455,3 +456,186 @@ GROUP BY Pays, Groupe_Age ORDER BY Pays, Groupe_Age""",
                 st.plotly_chart(style(fig, 260), use_container_width=True)
         except Exception as e:
             st.error(f"Erreur SQL : {e}")
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PAGE 6 — ROI & RECOMMANDATIONS
+# ═══════════════════════════════════════════════════════════════════════════════
+elif page == "💡 ROI & Recommandations":
+    st.markdown('<div class="page-title">ROI & Recommandations</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-sub">Simulateur d\'impact financier · Score bien-être · Actions prioritaires pour les DRH</div>', unsafe_allow_html=True)
+
+    sectors_df = data["sectors"]
+    costs_df   = data["costs"]
+    countries_df = data["countries"]
+
+    df_sec24  = sectors_df[sectors_df["Annee"] == 2024]
+    df_cost24 = costs_df[costs_df["Annee"] == 2024]
+    df_ctr24  = countries_df[countries_df["Year"] == 2024]
+
+    # ── SIMULATEUR ROI ──────────────────────────────────────────────────────────
+    st.markdown("### 🧮 Simulateur ROI — Investissement en prévention")
+    st.markdown("*Basé sur les études Deloitte & OMS : chaque 1€ investi en prévention génère 4–5€ de retour*")
+
+    col_s1, col_s2 = st.columns([1, 2])
+    with col_s1:
+        st.markdown("**Paramètres entreprise**")
+        nb_employes   = st.slider("Nombre d'employés", 50, 10000, 500, step=50)
+        salaire_moy   = st.slider("Salaire moyen annuel (€)", 25000, 80000, 40000, step=1000)
+        burnout_actuel = st.slider("Taux de burnout actuel (%)", 10, 60, 35)
+        reduction_cible = st.slider("Réduction burnout visée (points)", 1, 20, 10)
+        invest_par_emp = st.slider("Investissement prévention / employé (€/an)", 50, 2000, 500, step=50)
+
+    with col_s2:
+        # Calculs
+        employes_burnout     = int(nb_employes * burnout_actuel / 100)
+        employes_saves        = int(nb_employes * reduction_cible / 100)
+        cout_absenteisme_emp  = 18 * (salaire_moy / 220)           # 18j absence × coût journalier
+        cout_presenteisme_emp = salaire_moy * 0.07                  # 7% perte productivité
+        cout_turnover_emp     = salaire_moy * 0.30                  # 30% du salaire pour remplacer
+
+        gain_absenteisme  = round(employes_saves * cout_absenteisme_emp)
+        gain_presenteisme = round(employes_saves * cout_presenteisme_emp)
+        gain_turnover     = round(employes_saves * 0.15 * cout_turnover_emp)  # 15% turnover évité
+        total_gain        = gain_absenteisme + gain_presenteisme + gain_turnover
+        total_invest       = nb_employes * invest_par_emp
+        roi_ratio          = round(total_gain / total_invest, 1) if total_invest > 0 else 0
+
+        st.markdown("**Résultats simulés**")
+        r1, r2, r3, r4 = st.columns(4)
+        kpi(r1, "Employés à risque",        f"{employes_burnout:,}",      f"sur {nb_employes:,} employés", "red")
+        kpi(r2, "Gain absentéisme",         f"{gain_absenteisme:,} €",    "Jours évités × coût journalier", "amber")
+        kpi(r3, "Gain productivité",        f"{gain_presenteisme:,} €",   "Présentéisme réduit", "blue")
+        kpi(r4, "ROI estimé",               f"× {roi_ratio}",             f"Pour {total_invest:,}€ investis → {total_gain:,}€ récupérés", "green")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Graphique waterfall
+        fig = go.Figure(go.Waterfall(
+            name="ROI", orientation="v",
+            measure=["absolute","relative","relative","relative","total"],
+            x=["Investissement","Gain absentéisme","Gain productivité","Gain turnover","ROI net"],
+            y=[-total_invest, gain_absenteisme, gain_presenteisme, gain_turnover,
+               total_gain - total_invest],
+            connector=dict(line=dict(color="#e1dfdd")),
+            decreasing=dict(marker_color="#D13438"),
+            increasing=dict(marker_color="#107C10"),
+            totals=dict(marker_color="#0078D4"),
+            text=[f"-{total_invest:,}€", f"+{gain_absenteisme:,}€",
+                  f"+{gain_presenteisme:,}€", f"+{gain_turnover:,}€",
+                  f"{total_gain-total_invest:+,}€"],
+            textposition="outside"
+        ))
+        fig.update_layout(title=f"Waterfall ROI — {nb_employes} employés | Réduction {reduction_cible} pts burnout",
+                          yaxis_title="€")
+        st.plotly_chart(style(fig, 300), use_container_width=True)
+
+    st.markdown("---")
+
+    # ── SCORE BIEN-ÊTRE COMPOSITE ───────────────────────────────────────────────
+    st.markdown("### 🏆 Score Bien-être Mondial 2024")
+    st.markdown("*Indice composite : WLB (40%) + Burnout inversé (30%) + Absentéisme inversé (30%)*")
+
+    wlb_min, wlb_max = df_ctr24["Work_Life_Balance_Index"].min(), df_ctr24["Work_Life_Balance_Index"].max()
+    brn_min, brn_max = df_ctr24["Burnout_Rate_pct"].min(), df_ctr24["Burnout_Rate_pct"].max()
+    abs_min, abs_max = df_ctr24["Absenteeism_Days_per_employee"].min(), df_ctr24["Absenteeism_Days_per_employee"].max()
+
+    df_score = df_ctr24.copy()
+    df_score["wlb_norm"]  = (df_score["Work_Life_Balance_Index"] - wlb_min) / (wlb_max - wlb_min)
+    df_score["brn_norm"]  = 1 - (df_score["Burnout_Rate_pct"] - brn_min) / (brn_max - brn_min)
+    df_score["abs_norm"]  = 1 - (df_score["Absenteeism_Days_per_employee"] - abs_min) / (abs_max - abs_min)
+    df_score["wellbeing_score"] = (df_score["wlb_norm"]*0.4 + df_score["brn_norm"]*0.3 + df_score["abs_norm"]*0.3).round(3)
+    df_score = df_score.sort_values("wellbeing_score", ascending=False).reset_index(drop=True)
+    df_score["Rang"] = df_score.index + 1
+    df_score["Médaille"] = df_score["Rang"].map({1:"🥇", 2:"🥈", 3:"🥉"}).fillna("")
+
+    col_w1, col_w2 = st.columns([1, 2])
+    with col_w1:
+        st.dataframe(
+            df_score[["Médaille","Country","wellbeing_score","Burnout_Rate_pct","Work_Life_Balance_Index"]]
+            .rename(columns={"wellbeing_score":"Score","Burnout_Rate_pct":"Burnout %","Work_Life_Balance_Index":"WLB","Country":"Pays"}),
+            use_container_width=True, height=300
+        )
+    with col_w2:
+        colors = ["#F2C811" if i==0 else "#C8C6C4" if i==1 else "#CD7F32" if i==2 else "#0078D4"
+                  for i in range(len(df_score))]
+        fig = go.Figure(go.Bar(
+            x=df_score["Country"], y=df_score["wellbeing_score"],
+            marker_color=colors,
+            text=[f"{v:.3f}" for v in df_score["wellbeing_score"]],
+            textposition="outside"
+        ))
+        fig.update_layout(title="Classement bien-être au travail — 2024", yaxis_title="Score (0-1)", showlegend=False)
+        st.plotly_chart(style(fig, 300), use_container_width=True)
+
+    st.markdown("---")
+
+    # ── RECOMMANDATIONS ─────────────────────────────────────────────────────────
+    st.markdown("### 🎯 Recommandations Actionnables par Secteur — France 2024")
+
+    reco = {
+        "Santé & Social":  {"niveau":"🔴 Critique", "color":"#FDE7E9", "border":"#D13438",
+            "actions":["Mise en place de cellules de soutien psychologique d'urgence",
+                       "Réduction des heures supplémentaires + renforts temporaires",
+                       "Programme de rotation des équipes soignantes",
+                       "Formations managers : détection précoce du burnout"]},
+        "Éducation":       {"niveau":"🔴 Élevé", "color":"#FDE7E9", "border":"#D13438",
+            "actions":["Réduction de la charge administrative des enseignants",
+                       "Mise en place de temps de décompression collectif",
+                       "Accès facilité aux psychologues scolaires pour les personnels",
+                       "Valorisation et reconnaissance des équipes"]},
+        "Juridique":       {"niveau":"🟡 Modéré", "color":"#FFF4CE", "border":"#E36C09",
+            "actions":["Encadrement des astreintes et horaires atypiques",
+                       "Formation à la gestion du stress et des conflits clients",
+                       "Programme bien-être financé par le cabinet",
+                       "Entretiens individuels trimestriels sur la charge de travail"]},
+        "Finance":         {"niveau":"🟡 Modéré", "color":"#FFF4CE", "border":"#E36C09",
+            "actions":["Télétravail partiel pour réduire la pression de présence",
+                       "Sensibilisation aux risques du présentéisme",
+                       "Coaching collectif en période de clôtures/reporting",
+                       "Indicateurs bien-être intégrés aux objectifs managériaux"]},
+        "BTP":             {"niveau":"🟢 Faible", "color":"#DFF6DD", "border":"#107C10",
+            "actions":["Maintenir et renforcer les protocoles de sécurité",
+                       "Suivi médical régulier (stress physique → mental)",
+                       "Encourager la solidarité d'équipe déjà présente",
+                       "Benchmark des bonnes pratiques vers d'autres secteurs"]},
+    }
+
+    cols = st.columns(3)
+    for i, (secteur, info) in enumerate(reco.items()):
+        with cols[i % 3]:
+            actions_html = "".join([f"<li style='margin-bottom:4px;font-size:12px;color:#323130;'>{a}</li>" for a in info["actions"]])
+            st.markdown(f"""
+            <div style='background:{info["color"]};border-left:4px solid {info["border"]};
+                        border-radius:6px;padding:14px 16px;margin-bottom:12px;'>
+              <div style='font-weight:700;font-size:13px;color:#323130;margin-bottom:4px;'>{secteur}</div>
+              <div style='font-size:11px;margin-bottom:8px;'>{info["niveau"]}</div>
+              <ul style='padding-left:16px;margin:0;'>{actions_html}</ul>
+            </div>""", unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown("### 📈 Projection Tendance Burnout — France 2025–2027")
+    st.caption("Projection basée sur la tendance linéaire 2019–2024")
+
+    df_fr = countries_df[countries_df["Country"] == "France"].sort_values("Year")
+    import numpy as np
+    z = np.polyfit(df_fr["Year"], df_fr["Burnout_Rate_pct"], 1)
+    p = np.poly1d(z)
+    years_proj = [2025, 2026, 2027]
+    proj_vals  = [round(p(y), 1) for y in years_proj]
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=df_fr["Year"], y=df_fr["Burnout_Rate_pct"],
+        name="Historique", mode="lines+markers",
+        line=dict(color="#0078D4", width=2), marker_size=6))
+    fig.add_trace(go.Scatter(x=years_proj, y=proj_vals,
+        name="Projection", mode="lines+markers",
+        line=dict(color="#D13438", width=2, dash="dash"), marker_size=6))
+    fig.add_shape(type="line", x0=2024, x1=2027,
+                  y0=df_fr["Burnout_Rate_pct"].max(), y1=df_fr["Burnout_Rate_pct"].max(),
+                  line=dict(color="#E36C09", dash="dot", width=1))
+    fig.add_annotation(x=2025, y=df_fr["Burnout_Rate_pct"].max()+0.5,
+                       text="⚠️ Seuil d'alerte", showarrow=False,
+                       font=dict(color="#E36C09", size=10))
+    fig.update_layout(title="Tendance & Projection burnout France (2019–2027)",
+                      yaxis_title="Burnout (%)", xaxis_title="Année")
+    st.plotly_chart(style(fig, 300), use_container_width=True)
