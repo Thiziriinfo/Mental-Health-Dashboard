@@ -1,0 +1,41 @@
+Pays,Annee,Groupe_Age,Genre,Taux_Burnout_pct,Taux_Anxiete_pct,Taux_Depression_pct,Taux_Demande_Aide_pct
+France,2024,18-24 ans,Femme,41.2,38.6,26.4,32.4
+France,2024,18-24 ans,Homme,34.8,28.4,19.6,18.2
+France,2024,25-34 ans,Femme,44.6,34.2,23.8,28.6
+France,2024,25-34 ans,Homme,38.4,26.8,18.4,16.4
+France,2024,35-44 ans,Femme,42.8,30.6,21.4,26.8
+France,2024,35-44 ans,Homme,40.2,24.6,17.2,15.8
+France,2024,45-54 ans,Femme,36.4,26.8,19.2,24.4
+France,2024,45-54 ans,Homme,34.6,21.4,15.8,14.2
+France,2024,55-64 ans,Femme,28.6,22.4,16.8,22.6
+France,2024,55-64 ans,Homme,26.2,18.6,14.2,12.8
+Germany,2024,18-24 ans,Femme,34.8,32.4,22.6,38.4
+Germany,2024,18-24 ans,Homme,28.6,24.2,16.4,22.6
+Germany,2024,25-34 ans,Femme,36.4,28.6,20.2,34.2
+Germany,2024,25-34 ans,Homme,30.4,22.4,15.6,20.4
+Germany,2024,35-44 ans,Femme,34.8,26.2,18.8,32.6
+Germany,2024,35-44 ans,Homme,32.6,21.2,14.8,19.2
+Germany,2024,45-54 ans,Femme,28.4,22.6,16.4,30.4
+Germany,2024,45-54 ans,Homme,26.8,18.4,13.6,18.4
+Germany,2024,55-64 ans,Femme,22.4,18.8,14.2,28.6
+Germany,2024,55-64 ans,Homme,20.6,15.6,12.0,17.2
+United Kingdom,2024,18-24 ans,Femme,42.6,40.2,28.4,42.8
+United Kingdom,2024,18-24 ans,Homme,36.4,30.6,21.2,24.6
+United Kingdom,2024,25-34 ans,Femme,44.8,36.4,25.2,38.4
+United Kingdom,2024,25-34 ans,Homme,40.2,28.4,20.4,22.4
+United Kingdom,2024,35-44 ans,Femme,42.4,32.6,23.4,36.2
+United Kingdom,2024,35-44 ans,Homme,38.6,26.2,18.8,21.6
+United Kingdom,2024,45-54 ans,Femme,36.2,28.4,21.2,34.4
+United Kingdom,2024,45-54 ans,Homme,32.4,22.6,17.2,20.4
+United Kingdom,2024,55-64 ans,Femme,28.8,24.2,18.6,32.8
+United Kingdom,2024,55-64 ans,Homme,24.6,19.8,15.4,19.8
+Japan,2024,18-24 ans,Femme,48.4,36.8,26.2,18.4
+Japan,2024,18-24 ans,Homme,42.6,28.4,20.8,8.6
+Japan,2024,25-34 ans,Femme,50.2,34.6,24.8,16.8
+Japan,2024,25-34 ans,Homme,48.4,30.2,22.4,7.4
+Japan,2024,35-44 ans,Femme,46.8,32.4,23.2,15.6
+Japan,2024,35-44 ans,Homme,50.6,32.8,24.6,6.8
+Japan,2024,45-54 ans,Femme,40.4,28.6,21.4,14.2
+Japan,2024,45-54 ans,Homme,46.2,30.4,22.8,6.2
+Japan,2024,55-64 ans,Femme,32.6,24.8,19.2,13.4
+Japan,2024,55-64 ans,Homme,38.4,26.4,20.6,5.8
