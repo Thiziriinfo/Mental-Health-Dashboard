@@ -232,13 +232,13 @@ elif page == "💶 Impact Économique":
     df24 = df[df["Annee"] == max(years)]
     dfr  = df[df["Pays"] == "France"]
     fr24 = df24[df24["Pays"] == "France"].iloc[0]
-    usa24 = df24[df24["Pays"] == "USA"]["Cout_Total_Mds_EUR"].values[0]
+    top_pays = df24.loc[df24["Cout_Total_Mds_EUR"].idxmax()]
 
     c1,c2,c3,c4 = st.columns(4)
     kpi(c1, "Coût total France 2024",    f"{fr24['Cout_Total_Mds_EUR']:.1f} Mds €",   "▲ +27.5% vs 2019", "red")
     kpi(c2, "Perte productivité France", f"{fr24['Perte_Productivite_Mds_EUR']:.1f} Mds €", "57% du coût total", "amber")
     kpi(c3, "Coût / habitant France",    f"{int(fr24['Cout_par_habitant_EUR']):,} €", "▲ +418 € vs 2019")
-    kpi(c4, "Coût total USA 2024",       f"{usa24:.1f} Mds €",                         "Record mondial", "red")
+    kpi(c4, f"Coût total {top_pays['Pays']} 2024", f"{top_pays['Cout_Total_Mds_EUR']:.1f} Mds €", "Record mondial", "red")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -365,16 +365,13 @@ elif page == "🔍 Explorateur SQL":
     st.markdown('<div class="page-title">Explorateur SQL</div>', unsafe_allow_html=True)
     st.markdown('<div class="page-sub">Requêtes analytiques en direct · CTEs · Window Functions · Jointures</div>', unsafe_allow_html=True)
 
-    @st.cache_resource
     def get_conn():
-        conn = sqlite3.connect(":memory:")
+        conn = sqlite3.connect(":memory:", check_same_thread=False)
         data["countries"].to_sql("countries", conn, if_exists="replace", index=False)
         data["costs"].to_sql("costs", conn, if_exists="replace", index=False)
         data["sectors"].to_sql("sectors_france", conn, if_exists="replace", index=False)
         data["age_gender"].to_sql("age_gender", conn, if_exists="replace", index=False)
         return conn
-
-    mem_conn = get_conn()
 
     queries = {
         "1 — Burnout moyen par pays (AVG + GROUP BY)": """SELECT Country, Region,
@@ -446,6 +443,7 @@ GROUP BY Pays, Groupe_Age ORDER BY Pays, Groupe_Age""",
 
     if st.button("▶ Exécuter", type="primary"):
         try:
+            mem_conn = get_conn()
             result = pd.read_sql(q_input, mem_conn)
             st.success(f"✅ {len(result)} lignes retournées")
             st.dataframe(result, use_container_width=True)
